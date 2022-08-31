@@ -1,9 +1,11 @@
 package main
 
 import (
-	"bookings/pkg/config"
-	"bookings/pkg/handlers"
-	"bookings/pkg/render"
+	"bookings/internal/config"
+	"bookings/internal/handlers"
+	"bookings/internal/models"
+	"bookings/internal/render"
+	"encoding/gob"
 	"fmt"
 	"github.com/alexedwards/scs/v2"
 	"log"
@@ -17,6 +19,18 @@ var app config.AppConfig
 var session *scs.SessionManager
 
 func main() {
+	err := run()
+	errFatal(err)
+
+	fmt.Println("Application has started on port", port)
+	srv := &http.Server{Addr: port, Handler: routes(&app)}
+	err = srv.ListenAndServe()
+	errFatal(err)
+}
+
+func run() error {
+	//what am I going to put in the session?
+	gob.Register(models.Reservation{})
 
 	app.InProduction = false
 	session = scs.New()
@@ -26,7 +40,7 @@ func main() {
 	session.Cookie.Secure = app.InProduction
 	app.Session = session
 	templateCache, err := render.CreateTemplateCache()
-	errFatal(err)
+	returnError(err)
 
 	app.TemplateCache = templateCache
 	app.UseCache = true
@@ -35,16 +49,11 @@ func main() {
 	handlers.NewHandlers(repo)
 	render.NewTemplates(&app)
 
-	fmt.Println("Application has started on port", port)
-	srv := &http.Server{Addr: port, Handler: routes(&app)}
-	err = srv.ListenAndServe()
-	errFatal(err)
+	return nil
 }
 
-func errCheck(e error) {
-	if e != nil {
-		log.Panicln(e)
-	}
+func returnError(err error) error {
+	return err
 }
 
 func errFatal(e error) {
