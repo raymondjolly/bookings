@@ -3,11 +3,11 @@ package handlers
 import (
 	"bookings/internal/config"
 	"bookings/internal/forms"
+	"bookings/internal/helpers"
 	"bookings/internal/models"
 	"bookings/internal/render"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 )
 
@@ -31,26 +31,13 @@ func NewHandlers(r *Repository) {
 
 // Home is a 'home' route function
 func (rep *Repository) Home(w http.ResponseWriter, r *http.Request) {
-	remoteIP := r.RemoteAddr
-	rep.App.Session.Put(r.Context(), "remote_ip", remoteIP)
-	stringMap := make(map[string]string)
-	stringMap["test"] = "Hey, there. Waz up?"
-	render.RenderTemplate(w, r, "home.page.tmpl", &models.TemplateData{
-		StringMap: stringMap,
-	})
+	render.RenderTemplate(w, r, "home.page.tmpl", &models.TemplateData{})
 
 }
 
 // About is the 'about' page handler
 func (rep *Repository) About(w http.ResponseWriter, r *http.Request) {
-	stringMap := make(map[string]string)
-	stringMap["test"] = "Hey there."
-
-	remoteIP := rep.App.Session.GetString(r.Context(), "remote_ip")
-	stringMap["remote_ip"] = remoteIP
-	render.RenderTemplate(w, r, "about.page.tmpl", &models.TemplateData{
-		StringMap: stringMap,
-	})
+	render.RenderTemplate(w, r, "about.page.tmpl", &models.TemplateData{})
 }
 
 func (rep *Repository) Contact(w http.ResponseWriter, r *http.Request) {
@@ -69,7 +56,7 @@ func (rep *Repository) GeneralsQuarters(w http.ResponseWriter, r *http.Request) 
 func (rep *Repository) PostReservation(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
-		log.Println(err)
+		helpers.ServerError(w, err)
 		return
 	}
 	reservation := models.Reservation{
@@ -132,7 +119,8 @@ func (rep *Repository) AvailabilityJSON(w http.ResponseWriter, r *http.Request) 
 
 	out, err := json.MarshalIndent(resp, "", "     ")
 	if err != nil {
-		log.Println(err)
+		helpers.ServerError(w, err)
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -142,7 +130,7 @@ func (rep *Repository) AvailabilityJSON(w http.ResponseWriter, r *http.Request) 
 func (rep *Repository) ReservationSummary(w http.ResponseWriter, r *http.Request) {
 	reservation, ok := rep.App.Session.Get(r.Context(), "reservation").(models.Reservation)
 	if !ok {
-		log.Println("cannot get item from session")
+		rep.App.ErrorLog.Println("cannot get error from session")
 		rep.App.Session.Put(r.Context(), "warning", "Cannot get reservation from session")
 		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 		return
