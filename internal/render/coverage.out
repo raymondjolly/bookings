@@ -1,0 +1,26 @@
+mode: set
+bookings/internal/render/render.go:20.40,22.2 1 1
+bookings/internal/render/render.go:24.84,30.2 5 1
+bookings/internal/render/render.go:33.105,35.18 2 1
+bookings/internal/render/render.go:43.2,44.11 2 1
+bookings/internal/render/render.go:48.2,56.12 7 1
+bookings/internal/render/render.go:35.18,38.3 1 0
+bookings/internal/render/render.go:38.8,40.3 1 1
+bookings/internal/render/render.go:44.11,46.3 1 1
+bookings/internal/render/render.go:60.67,65.16 3 1
+bookings/internal/render/render.go:70.2,70.29 1 1
+bookings/internal/render/render.go:91.2,91.27 1 1
+bookings/internal/render/render.go:65.16,67.3 1 0
+bookings/internal/render/render.go:70.29,74.17 3 1
+bookings/internal/render/render.go:78.3,79.17 2 1
+bookings/internal/render/render.go:82.3,82.23 1 1
+bookings/internal/render/render.go:74.17,76.4 1 0
+bookings/internal/render/render.go:79.17,81.4 1 0
+bookings/internal/render/render.go:82.23,84.18 2 1
+bookings/internal/render/render.go:87.4,87.37 1 1
+bookings/internal/render/render.go:84.18,86.5 1 0
+bookings/internal/render/render.go:94.33,95.14 1 1
+bookings/internal/render/render.go:98.2,98.10 1 1
+bookings/internal/render/render.go:95.14,97.3 1 1
+bookings/internal/render/render.go:101.24,102.14 1 0
+bookings/internal/render/render.go:102.14,104.3 1 0

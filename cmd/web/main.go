@@ -3,6 +3,7 @@ package main
 import (
 	"bookings/internal/config"
 	"bookings/internal/handlers"
+	"bookings/internal/helpers"
 	"bookings/internal/models"
 	"bookings/internal/render"
 	"encoding/gob"
@@ -10,6 +11,7 @@ import (
 	"github.com/alexedwards/scs/v2"
 	"log"
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -17,6 +19,8 @@ const port = ":8080"
 
 var app config.AppConfig
 var session *scs.SessionManager
+var infoLog *log.Logger
+var errorLog *log.Logger
 
 func main() {
 	err := run()
@@ -33,12 +37,20 @@ func run() error {
 	gob.Register(models.Reservation{})
 
 	app.InProduction = false
+
+	infoLog = log.New(os.Stdout, "INFO:\t", log.Ldate|log.Ltime)
+	app.InfoLog = infoLog
+
+	errorLog = log.New(os.Stdout, "ERROR\t", log.Ldate|log.Ldate|log.Lshortfile)
+	app.ErrorLog = errorLog
+
 	session = scs.New()
 	session.Lifetime = 24 * time.Hour
 	session.Cookie.Persist = true
 	session.Cookie.SameSite = http.SameSiteLaxMode
 	session.Cookie.Secure = app.InProduction
 	app.Session = session
+
 	templateCache, err := render.CreateTemplateCache()
 	returnError(err)
 
@@ -48,6 +60,7 @@ func run() error {
 	repo := handlers.NewRepository(&app)
 	handlers.NewHandlers(repo)
 	render.NewTemplates(&app)
+	helpers.NewHelpers(&app)
 
 	return nil
 }
