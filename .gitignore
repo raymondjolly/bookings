@@ -1,2 +1,4 @@
 .idea
 .out
+run.sh
+database.yml
