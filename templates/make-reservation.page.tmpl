@@ -49,6 +49,15 @@
                                autocomplete="off" type='email'
                                name='phone' value="{{$res.Phone}}" required>
                     </div>
+                    <div class="form-group">
+                        <label for="start_date">Start Date</label>
+                        <input type="text" name="start_date" id="start_date" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="end_date">End Date</label>
+                        <input type="text" name="end_date" id="end_date" class="form-control">
+                    </div>
+                    <input type="hidden" name="room_id" value="1">
 
                     <hr>
                     <input type="submit" class="btn btn-primary" value="Make Reservation">

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bookings/internal/config"
+	"bookings/internal/driver"
 	"bookings/internal/models"
 	"bookings/internal/render"
 	"encoding/gob"
@@ -37,15 +38,22 @@ func getRoutes() http.Handler {
 	session.Cookie.SameSite = http.SameSiteLaxMode
 	session.Cookie.Secure = app.InProduction
 	app.Session = session
+
+	log.Println("Connecting to database...")
+	db, err := driver.ConnectSQL("host=localhost port=5432 dbname=bookings user=raymondjolly password=")
+	if err != nil {
+		log.Fatalln("Cannot connect to the database. Dying.")
+	}
+
 	templateCache, err := CreateTestTemplateCache()
 	returnError(err)
 
 	app.TemplateCache = templateCache
 	app.UseCache = true
 
-	repo := NewRepository(&app)
+	repo := NewRepository(&app, db)
 	NewHandlers(repo)
-	render.NewTemplates(&app)
+	render.NewRenderer(&app)
 
 	mux := chi.NewRouter()
 	mux.Use(middleware.Recoverer)

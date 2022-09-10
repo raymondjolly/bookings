@@ -2,6 +2,7 @@ package main
 
 import (
 	"bookings/internal/config"
+	"bookings/internal/driver"
 	"bookings/internal/handlers"
 	"bookings/internal/helpers"
 	"bookings/internal/models"
@@ -23,8 +24,9 @@ var infoLog *log.Logger
 var errorLog *log.Logger
 
 func main() {
-	err := run()
+	db, err := run()
 	errFatal(err)
+	defer db.SQL.Close()
 
 	fmt.Println("Application has started on port", port)
 	srv := &http.Server{Addr: port, Handler: routes(&app)}
@@ -32,9 +34,12 @@ func main() {
 	errFatal(err)
 }
 
-func run() error {
+func run() (*driver.DB, error) {
 	//what am I going to put in the session?
 	gob.Register(models.Reservation{})
+	gob.Register(models.User{})
+	gob.Register(models.Room{})
+	gob.Register(models.Restriction{})
 
 	app.InProduction = false
 
@@ -51,18 +56,26 @@ func run() error {
 	session.Cookie.Secure = app.InProduction
 	app.Session = session
 
+	//connect to database
+	log.Println("Connecting to database...")
+	db, err := driver.ConnectSQL("host=localhost port=5432 dbname=bookings user=raymondjolly password=")
+	if err != nil {
+		log.Fatalln("Cannot connect to the database. Dying.")
+	}
+
+	log.Println("Connected to database")
 	templateCache, err := render.CreateTemplateCache()
 	returnError(err)
 
 	app.TemplateCache = templateCache
 	app.UseCache = true
 
-	repo := handlers.NewRepository(&app)
+	repo := handlers.NewRepository(&app, db)
 	handlers.NewHandlers(repo)
-	render.NewTemplates(&app)
+	render.NewRenderer(&app)
 	helpers.NewHelpers(&app)
 
-	return nil
+	return db, nil
 }
 
 func returnError(err error) error {

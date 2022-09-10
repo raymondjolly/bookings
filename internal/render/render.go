@@ -16,8 +16,8 @@ import (
 var app *config.AppConfig
 var pathToTemplates = "./templates"
 
-// NewTemplates sets the config for the template package
-func NewTemplates(a *config.AppConfig) {
+// NewRenderer sets the config for the template package
+func NewRenderer(a *config.AppConfig) {
 	app = a
 }
 
@@ -29,8 +29,8 @@ func AddDefaultDate(td *models.TemplateData, r *http.Request) *models.TemplateDa
 	return td
 }
 
-// RenderTemplate renders a template
-func RenderTemplate(w http.ResponseWriter, r *http.Request, tmpl string, td *models.TemplateData) error {
+// Template renders a template
+func Template(w http.ResponseWriter, r *http.Request, tmpl string, td *models.TemplateData) error {
 	var tc = map[string]*template.Template{}
 	if app.UseCache {
 		//create a template cache
@@ -75,12 +75,12 @@ func CreateTemplateCache() (map[string]*template.Template, error) {
 			return templateCache, err
 		}
 		//now look for layouts in the directory
-		matches, err := filepath.Glob(fmt.Sprintf("%s/*.page.tmpl", pathToTemplates))
+		matches, err := filepath.Glob(fmt.Sprintf("%s/*.layout.tmpl", pathToTemplates))
 		if err != nil {
 			return templateCache, err
 		}
 		if len(matches) > 0 {
-			templateSet, err = templateSet.ParseGlob(fmt.Sprintf("%s/*.page.tmpl", pathToTemplates))
+			templateSet, err = templateSet.ParseGlob(fmt.Sprintf("%s/*.layout.tmpl", pathToTemplates))
 			if err != nil {
 				return templateCache, err
 			}
