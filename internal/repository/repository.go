@@ -9,5 +9,5 @@ type DatabaseRepo interface {
 	AllUsers() bool
 	InsertReservation(res models.Reservation) (int, error)
 	InsertRoomRestriction(r models.RoomRestriction) error
-	SearchAvailabilityByDates(start, end time.Time) (int, error)
+	SearchAvailabilityByDates(startDate, endDate time.Time, roomId int) (bool, error)
 }
