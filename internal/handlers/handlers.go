@@ -62,36 +62,20 @@ func (rep *Repository) GeneralsQuarters(w http.ResponseWriter, r *http.Request) 
 
 // PostReservation handles the posting of a reservation form
 func (rep *Repository) PostReservation(w http.ResponseWriter, r *http.Request) {
+	reservation, ok := rep.App.Session.Get(r.Context(), "reservation").(models.Reservation)
+	checkErrorOk(w, ok, "could not get reservation from session")
 	err := r.ParseForm()
 	if err != nil {
 		helpers.ServerError(w, err)
 		return
 	}
 
-	sd := r.Form.Get("start_date")
-	ed := r.Form.Get("end_date")
-
-	//01/02 03:04:05PM '06 -0700
-	layout := "2006-01-02"
-	startDate, err := time.Parse(layout, sd)
-	checkServerError(w, err)
-	endDate, err := time.Parse(layout, ed)
-	checkServerError(w, err)
-	roomID, err := strconv.Atoi(r.Form.Get("room_id"))
-	checkServerError(w, err)
-
-	reservation := models.Reservation{
-		FirstName: r.Form.Get("first_name"),
-		LastName:  r.Form.Get("last_name"),
-		Email:     r.Form.Get("email"),
-		Phone:     r.Form.Get("phone"),
-		RoomID:    roomID,
-		StartDate: startDate,
-		EndDate:   endDate,
-	}
+	reservation.FirstName = r.Form.Get("first_name")
+	reservation.LastName = r.Form.Get("last_name")
+	reservation.Phone = r.Form.Get("phone")
+	reservation.Email = r.Form.Get("email")
 
 	form := forms.New(r.PostForm)
-	//form.Has("first_name", r)
 	form.Required("first_name", "last_name", "email", "phone")
 	form.MinLength("first_name", 3)
 	form.MinLength("last_name", 2)
@@ -112,9 +96,9 @@ func (rep *Repository) PostReservation(w http.ResponseWriter, r *http.Request) {
 	checkServerError(w, err)
 
 	restriction := models.RoomRestriction{
-		StartDate:     startDate,
-		EndDate:       endDate,
-		RoomID:        roomID,
+		StartDate:     reservation.StartDate,
+		EndDate:       reservation.EndDate,
+		RoomID:        reservation.RoomID,
 		ReservationID: newReservationID,
 		RestrictionID: 1,
 	}
@@ -128,12 +112,12 @@ func (rep *Repository) PostReservation(w http.ResponseWriter, r *http.Request) {
 func (rep *Repository) MakeReservation(w http.ResponseWriter, r *http.Request) {
 	res, ok := rep.App.Session.Get(r.Context(), "reservation").(models.Reservation)
 	checkErrorOk(w, ok, "cannot get reservation from session")
-	//if !ok {
-	//	helpers.ServerError(w, errors.New("cannot get reservation from session"))
-	//}
+
 	room, err := rep.DB.GetRoomById(res.RoomID)
 	checkServerError(w, err)
 	res.Room.RoomName = room.RoomName
+
+	rep.App.Session.Put(r.Context(), "reservation", res)
 
 	layout := "2006-01-02"
 	sd := res.StartDate.Format(layout)
@@ -218,9 +202,15 @@ func (rep *Repository) ReservationSummary(w http.ResponseWriter, r *http.Request
 
 	data := make(map[string]interface{})
 	data["reservation"] = reservation
+	sd := reservation.StartDate.Format("2006-01-02")
+	ed := reservation.EndDate.Format("2006-01-02")
+	stringMap := make(map[string]string)
+	stringMap["start_date"] = sd
+	stringMap["end_date"] = ed
 
 	render.Template(w, r, "reservation-summary.page.tmpl", &models.TemplateData{
-		Data: data,
+		Data:      data,
+		StringMap: stringMap,
 	})
 }
 
