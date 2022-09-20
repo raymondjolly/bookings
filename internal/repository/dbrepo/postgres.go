@@ -3,6 +3,8 @@ package dbrepo
 import (
 	"bookings/internal/models"
 	"context"
+	"errors"
+	"golang.org/x/crypto/bcrypt"
 	"time"
 )
 
@@ -113,4 +115,71 @@ func (m *postgresDBRepo) GetRoomById(id int) (models.Room, error) {
 	} else {
 		return room, nil
 	}
+}
+
+// GetUserByID returns a user by ID from postgres
+func (m *postgresDBRepo) GetUserById(id int) (models.User, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	var u models.User
+
+	query := `select id, first_name, last_name, email, password, access_level, created_at, updated_at from users
+		where id = $1`
+
+	row := m.DB.QueryRowContext(ctx, query, id)
+	err := row.Scan(
+		&u.ID,
+		&u.FirstName,
+		&u.LastName,
+		&u.Email,
+		&u.Password,
+		&u.AccessLevel,
+		&u.CreatedAt,
+		&u.UpdatedAt)
+	if err != nil {
+		return u, err
+	}
+	return u, nil
+}
+
+// ModifyUser updates the user in Postgres
+func (m *postgresDBRepo) ModifyUser(u models.User) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	query := `update users set first_name=$1, last_name=$2, email=$3, access_level=$4, updated_at=$5 from users`
+	_, err := m.DB.ExecContext(ctx,
+		query,
+		u.FirstName,
+		u.LastName,
+		u.Email,
+		u.AccessLevel,
+		time.Now())
+
+	if err != nil {
+		return nil
+	}
+	return err
+}
+
+// Authenticate authenticates the user
+func (m *postgresDBRepo) Authenticate(email, testPassword string) (int, string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	var id int
+	var hashedPassword string
+	row := m.DB.QueryRowContext(ctx, "select id, password from user where email=$1", email)
+	err := row.Scan(&id, &hashedPassword)
+	if err != nil {
+		return id, "", err
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(testPassword))
+	if err == bcrypt.ErrMismatchedHashAndPassword {
+		return 0, "", errors.New("incorrect password")
+	} else if err != nil {
+		return 0, "", err
+	}
+
+	return id, hashedPassword, nil
 }
