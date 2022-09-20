@@ -17,13 +17,16 @@ var testApp config.AppConfig
 
 func TestMain(m *testing.M) {
 
+	// what am I going to put in the session
 	gob.Register(models.Reservation{})
 
+	// change this to true when in production
 	testApp.InProduction = false
 
-	infoLog := log.New(os.Stdout, "INFO:\t", log.Ldate|log.Ltime)
+	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
 	testApp.InfoLog = infoLog
-	errorLog := log.New(os.Stdout, "ERROR\t", log.Ldate|log.Ldate|log.Lshortfile)
+
+	errorLog := log.New(os.Stdout, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 	testApp.ErrorLog = errorLog
 
 	session = scs.New()
@@ -31,9 +34,11 @@ func TestMain(m *testing.M) {
 	session.Cookie.Persist = true
 	session.Cookie.SameSite = http.SameSiteLaxMode
 	session.Cookie.Secure = false
+
 	testApp.Session = session
 
 	app = &testApp
+
 	os.Exit(m.Run())
 }
 

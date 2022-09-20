@@ -28,6 +28,10 @@ func main() {
 	errFatal(err)
 	defer db.SQL.Close()
 
+	defer close(app.MailChan)
+	fmt.Println("Starting mail listener...")
+	listenForMail()
+
 	fmt.Println("Application has started on port", port)
 	srv := &http.Server{Addr: port, Handler: routes(&app)}
 	err = srv.ListenAndServe()
@@ -40,6 +44,9 @@ func run() (*driver.DB, error) {
 	gob.Register(models.User{})
 	gob.Register(models.Room{})
 	gob.Register(models.Restriction{})
+
+	mailChan := make(chan models.MailData)
+	app.MailChan = mailChan
 
 	app.InProduction = false
 
