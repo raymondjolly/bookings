@@ -6,4 +6,4 @@ This is the repository for my Bookings and reservations project
 - Uses [SCS Session Management](https://github.com/alexedwards/scs)
 - Uses [nosurf](https://github.com/justinas/nosurf)
 
-A test change
+test modification
