@@ -28,3 +28,8 @@ func ServerError(w http.ResponseWriter, err error) {
 func ParseError(err error) {
 	app.ErrorLog.Println("cannot parse string")
 }
+
+func IsAuthenticated(r *http.Request) bool {
+	exists := app.Session.Exists(r.Context(), "user_id")
+	return exists
+}
