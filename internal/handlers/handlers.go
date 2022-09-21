@@ -419,6 +419,18 @@ func (rep *Repository) PostShowLogin(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
+// Logout logs a user out
+func (rep *Repository) Logout(w http.ResponseWriter, r *http.Request) {
+	_ = rep.App.Session.Destroy(r.Context())
+	_ = rep.App.Session.RenewToken(r.Context())
+
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+func (rep *Repository) AdminDashboard(w http.ResponseWriter, r *http.Request) {
+	render.Template(w, r, "admin-dashboard.page.tmpl", &models.TemplateData{})
+}
+
 func checkServerError(w http.ResponseWriter, err error) {
 	if err != nil {
 		helpers.ServerError(w, err)
