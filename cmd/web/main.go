@@ -75,7 +75,7 @@ func run() (*driver.DB, error) {
 	returnError(err)
 
 	app.TemplateCache = templateCache
-	app.UseCache = true
+	app.UseCache = false
 
 	repo := handlers.NewRepository(&app, db)
 	handlers.NewHandlers(repo)
