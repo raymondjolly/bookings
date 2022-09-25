@@ -378,6 +378,7 @@ func (rep *Repository) BookRoom(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// ShowLogin shows the login screen
 func (rep *Repository) ShowLogin(w http.ResponseWriter, r *http.Request) {
 	render.Template(w, r, "login.page.tmpl", &models.TemplateData{
 		Form: forms.New(nil),
@@ -431,10 +432,22 @@ func (rep *Repository) AdminDashboard(w http.ResponseWriter, r *http.Request) {
 	render.Template(w, r, "admin-dashboard.page.tmpl", &models.TemplateData{})
 }
 
+// AdminNewReservations shows all new reservations in admin tool
 func (rep *Repository) AdminNewReservations(w http.ResponseWriter, r *http.Request) {
-	render.Template(w, r, "admin-new-reservations.page.tmpl", &models.TemplateData{})
+
+	reservations, err := rep.DB.AllNewReservations()
+	if err != nil {
+		helpers.ServerError(w, err)
+	}
+	data := make(map[string]interface{})
+	data["reservations"] = reservations
+
+	render.Template(w, r, "admin-new-reservations.page.tmpl", &models.TemplateData{
+		Data: data,
+	})
 }
 
+// AdminAllReservations shows all reservations in admin tool
 func (rep *Repository) AdminAllReservations(w http.ResponseWriter, r *http.Request) {
 	reservations, err := rep.DB.AllReservations()
 	if err != nil {
