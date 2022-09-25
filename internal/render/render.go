@@ -11,7 +11,12 @@ import (
 	"log"
 	"net/http"
 	"path/filepath"
+	"time"
 )
+
+var functions = template.FuncMap{
+	"humanDate": HumanDate,
+}
 
 var app *config.AppConfig
 var pathToTemplates = "./templates"
@@ -19,6 +24,11 @@ var pathToTemplates = "./templates"
 // NewRenderer sets the config for the template package
 func NewRenderer(a *config.AppConfig) {
 	app = a
+}
+
+// HumanDate returns time in YYY-MM-DD format
+func HumanDate(t time.Time) string {
+	return t.Format("2006-01-02")
 }
 
 func AddDefaultDate(td *models.TemplateData, r *http.Request) *models.TemplateData {
@@ -73,7 +83,7 @@ func CreateTemplateCache() (map[string]*template.Template, error) {
 	for _, page := range pages {
 		name := filepath.Base(page)
 		//parse file
-		templateSet, err := template.New(name).ParseFiles(page)
+		templateSet, err := template.New(name).Funcs(functions).ParseFiles(page)
 		if err != nil {
 			return templateCache, err
 		}

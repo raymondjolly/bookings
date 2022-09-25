@@ -8,8 +8,8 @@ import (
 	"bookings/internal/models"
 	"bookings/internal/render"
 	"encoding/gob"
-	"fmt"
 	"github.com/alexedwards/scs/v2"
+	"github.com/fatih/color"
 	"log"
 	"net/http"
 	"os"
@@ -29,10 +29,10 @@ func main() {
 	defer db.SQL.Close()
 
 	defer close(app.MailChan)
-	fmt.Println("Starting mail listener...")
+	color.Cyan("Starting mail listener...")
 	listenForMail()
 
-	fmt.Println("Application has started on port", port)
+	color.Green("Application has started on port %s", port)
 	srv := &http.Server{Addr: port, Handler: routes(&app)}
 	err = srv.ListenAndServe()
 	errFatal(err)
@@ -64,13 +64,13 @@ func run() (*driver.DB, error) {
 	app.Session = session
 
 	//connect to database
-	log.Println("Connecting to database...")
+	color.Cyan("Connecting to database...")
 	db, err := driver.ConnectSQL("host=localhost port=5432 dbname=bookings user=raymondjolly password=")
 	if err != nil {
 		log.Fatalln("Cannot connect to the database. Dying.")
 	}
 
-	log.Println("Connected to database")
+	color.Green("Connected to database")
 	templateCache, err := render.CreateTemplateCache()
 	returnError(err)
 

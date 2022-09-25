@@ -44,7 +44,7 @@ func (m *postgresDBRepo) InsertRoomRestriction(res models.RoomRestriction) error
 	return nil
 }
 
-// SearchAvailabilityByDates returns true if an availablity exists and false if no availability exits
+//SearchAvailabilityByDatesByRoomID returns true if an availablity exists and false if no availability exits
 func (m *postgresDBRepo) SearchAvailabilityByDatesByRoomID(startDate, endDate time.Time, roomId int) (bool, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -105,6 +105,7 @@ func (m *postgresDBRepo) GetRoomById(id int) (models.Room, error) {
 	query := `select id, room_name, created_at, updated_at from rooms where id =$1`
 
 	row := m.DB.QueryRowContext(ctx, query, id)
+
 	err := row.Scan(
 		&room.ID,
 		&room.RoomName,
@@ -117,7 +118,7 @@ func (m *postgresDBRepo) GetRoomById(id int) (models.Room, error) {
 	}
 }
 
-// GetUserByID returns a user by ID from postgres
+//GetUserById returns a user by ID from postgres
 func (m *postgresDBRepo) GetUserById(id int) (models.User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -160,6 +161,52 @@ func (m *postgresDBRepo) ModifyUser(u models.User) error {
 		return nil
 	}
 	return err
+}
+
+// AllReservations returns a slice of all reservations
+func (m *postgresDBRepo) AllReservations() ([]models.Reservation, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	var reservations []models.Reservation
+
+	query := `select r.id, r.first_name, r.last_name, r.phone, r.email, r.start_date, r.end_date, r.room_id,
+       r.created_at, r.updated_at, rm.id as room_id, rm.room_name from reservations r left join rooms rm on r.room_id = rm.id
+		order by r.start_date asc`
+
+	rows, err := m.DB.QueryContext(ctx, query)
+	defer rows.Close()
+
+	if err != nil {
+		return reservations, err
+	}
+
+	for rows.Next() {
+		var i models.Reservation
+		err := rows.Scan(
+			&i.ID,
+			&i.FirstName,
+			&i.LastName,
+			&i.Phone,
+			&i.Email,
+			&i.StartDate,
+			&i.EndDate,
+			&i.RoomID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Room.ID,
+			&i.Room.RoomName,
+		)
+
+		if err != nil {
+			return reservations, err
+		}
+		reservations = append(reservations, i)
+	}
+	if err = rows.Err(); err != nil {
+		return reservations, err
+	}
+	return reservations, nil
 }
 
 // Authenticate authenticates the user
