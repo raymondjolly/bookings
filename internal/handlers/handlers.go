@@ -16,6 +16,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -455,14 +456,42 @@ func (rep *Repository) AdminAllReservations(w http.ResponseWriter, r *http.Reque
 	}
 	data := make(map[string]interface{})
 	data["reservations"] = reservations
-
 	render.Template(w, r, "admin-all-reservations.page.tmpl", &models.TemplateData{
 		Data: data,
 	})
 }
 
+// AdminShowReservation shows the reservation in the admin tool
+func (rep *Repository) AdminShowReservation(w http.ResponseWriter, r *http.Request) {
+	exploded := strings.Split(r.RequestURI, "/")
+	id, err := strconv.Atoi(exploded[4])
+	if err != nil {
+		helpers.ServerError(w, err)
+		return
+	}
+	src := exploded[3]
+	stringMap := make(map[string]string)
+	stringMap["src"] = src
+
+	res, err := rep.DB.GetReservationById(id)
+	if err != nil {
+		helpers.ServerError(w, err)
+		return
+	}
+
+	data := make(map[string]interface{})
+	data["reservation"] = res
+
+	render.Template(w, r, "admin-reservations-show.page.tmpl", &models.TemplateData{
+		StringMap: stringMap,
+		Data:      data,
+		Form:      forms.New(nil),
+	})
+}
+
+// AdminCalendarReservations displays the reservation calendar
 func (rep *Repository) AdminCalendarReservations(w http.ResponseWriter, r *http.Request) {
-	render.Template(w, r, "admin-reservations-calendar.page.tmpl", &models.TemplateData{})
+	render.Template(w, r, "admin-reservations-show.page.tmpl", &models.TemplateData{})
 }
 
 func checkServerError(w http.ResponseWriter, err error) {
