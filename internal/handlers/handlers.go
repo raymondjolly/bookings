@@ -339,7 +339,6 @@ func (rep *Repository) ReservationSummary(w http.ResponseWriter, r *http.Request
 		Data:      data,
 		StringMap: stringMap,
 	})
-	fmt.Println(reservation.Room)
 }
 
 // ChooseRoom displays available rooms
@@ -470,6 +469,7 @@ func (rep *Repository) AdminShowReservation(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	src := exploded[3]
+
 	stringMap := make(map[string]string)
 	stringMap["src"] = src
 
@@ -487,6 +487,49 @@ func (rep *Repository) AdminShowReservation(w http.ResponseWriter, r *http.Reque
 		Data:      data,
 		Form:      forms.New(nil),
 	})
+
+}
+
+func (rep *Repository) AdminPostShowReservation(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		helpers.ServerError(w, err)
+	}
+
+	exploded := strings.Split(r.RequestURI, "/")
+	id, err := strconv.Atoi(exploded[4])
+
+	if err != nil {
+		helpers.ServerError(w, err)
+		return
+	}
+
+	println(exploded)
+	src := exploded[3]
+
+	stringMap := make(map[string]string)
+	stringMap["src"] = src
+	log.Println(id)
+
+	res, err := rep.DB.GetReservationById(id)
+	if err != nil {
+		helpers.ServerError(w, err)
+		return
+	}
+
+	res.FirstName = r.Form.Get("first_name")
+	res.LastName = r.Form.Get("last_name")
+	res.Email = r.Form.Get("email")
+	res.Phone = r.Form.Get("phone")
+
+	err = rep.DB.UpdateReservation(res)
+	if err != nil {
+		helpers.ServerError(w, err)
+		return
+	}
+
+	rep.App.Session.Put(r.Context(), "flash", "Changes Saved")
+	http.Redirect(w, r, fmt.Sprintf("/admin-reservations-%s", src), http.StatusSeeOther)
 }
 
 // AdminCalendarReservations displays the reservation calendar
