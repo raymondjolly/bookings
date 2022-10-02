@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"golang.org/x/crypto/bcrypt"
-	"log"
 	"time"
 )
 
@@ -180,8 +179,6 @@ func (m *postgresDBRepo) UpdateReservation(u models.Reservation) error {
 		u.Phone,
 		time.Now(),
 		u.ID)
-
-	log.Println("hitting the UpdateReservation method")
 
 	if err != nil {
 		return nil
