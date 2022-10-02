@@ -504,12 +504,10 @@ func (rep *Repository) AdminPostShowReservation(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	println(exploded)
 	src := exploded[3]
 
 	stringMap := make(map[string]string)
 	stringMap["src"] = src
-	log.Println(id)
 
 	res, err := rep.DB.GetReservationById(id)
 	if err != nil {
@@ -529,7 +527,7 @@ func (rep *Repository) AdminPostShowReservation(w http.ResponseWriter, r *http.R
 	}
 
 	rep.App.Session.Put(r.Context(), "flash", "Changes Saved")
-	http.Redirect(w, r, fmt.Sprintf("/admin-reservations-%s", src), http.StatusSeeOther)
+	http.Redirect(w, r, fmt.Sprintf("/admin/reservations-%s", src), http.StatusSeeOther)
 }
 
 // AdminCalendarReservations displays the reservation calendar
