@@ -487,9 +487,20 @@ func (rep *Repository) AdminShowReservation(w http.ResponseWriter, r *http.Reque
 		Data:      data,
 		Form:      forms.New(nil),
 	})
+}
+
+// AdminProcessReservation marks a reservation as processed
+func (rep *Repository) AdminProcessReservation(w http.ResponseWriter, r *http.Request) {
+	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
+	src := chi.URLParam(r, "src")
+
+	_ = rep.DB.UpdateProcessedForReservation(id, 1)
+	rep.App.Session.Put(r.Context(), "flash", "Reservation marked as processed")
+	http.Redirect(w, r, fmt.Sprintf("/admin/reservations-%s", src), http.StatusSeeOther)
 
 }
 
+// AdminPostShowReservation posts the updated reservation information
 func (rep *Repository) AdminPostShowReservation(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
