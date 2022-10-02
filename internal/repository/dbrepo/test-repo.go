@@ -10,6 +10,11 @@ func (m *testDBRepo) AllUsers() bool {
 	return true
 }
 
+func (m *testDBRepo) AllRooms() ([]models.Room, error) {
+	var rooms []models.Room
+	return rooms, nil
+}
+
 // InsertReservation inserts a reservation into the database
 func (m *testDBRepo) InsertReservation(res models.Reservation) (int, error) {
 	// if the room id is 2 then fail, otherwise pass
