@@ -372,6 +372,43 @@ func (m *postgresDBRepo) GetReservationById(id int) (models.Reservation, error) 
 	return res, nil
 }
 
+// GetRestrictionsForRoomByDate returns a slice of RoomRestrictions by RoomID, Start Date, and End Date
+func (m *postgresDBRepo) GetRestrictionsForRoomByDate(roomID int, start, end time.Time) ([]models.RoomRestriction, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
+	defer cancel()
+
+	var restrictions []models.RoomRestriction
+
+	query := `select id, coalesce(reservation_id, 0), restriction_id, room_id, start_date, end_date from room_restrictions
+	where $1< end_date and $2>=start_date and room_id = $3`
+
+	rows, err := m.DB.QueryContext(ctx, query, start, end, roomID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var r models.RoomRestriction
+		err := rows.Scan(
+			r.ID,
+			r.ReservationID,
+			r.RestrictionID,
+			r.RoomID,
+			r.StartDate,
+			r.EndDate,
+		)
+		if err != nil {
+			return nil, err
+		}
+		restrictions = append(restrictions, r)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	return restrictions, nil
+}
+
 // Authenticate authenticates the user
 func (m *postgresDBRepo) Authenticate(email, testPassword string) (int, string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
