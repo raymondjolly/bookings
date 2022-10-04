@@ -390,12 +390,12 @@ func (m *postgresDBRepo) GetRestrictionsForRoomByDate(roomID int, start, end tim
 	for rows.Next() {
 		var r models.RoomRestriction
 		err := rows.Scan(
-			r.ID,
-			r.ReservationID,
-			r.RestrictionID,
-			r.RoomID,
-			r.StartDate,
-			r.EndDate,
+			&r.ID,
+			&r.ReservationID,
+			&r.RestrictionID,
+			&r.RoomID,
+			&r.StartDate,
+			&r.EndDate,
 		)
 		if err != nil {
 			return nil, err
