@@ -27,6 +27,8 @@
 
         {{range $rooms}}
             {{$roomID:= .ID}}
+            {{$blocks:= index $.Data (printf "block_map_%d" .ID)}}
+            {{$reservations:= index $.Data (printf "reservation_map_%d" .ID)}}
 
             <h4 class="mt-4">{{.RoomName}}</h4>
             <div class="table-responsive">
@@ -38,10 +40,25 @@
                             </td>
                         {{end}}
                     </tr>
-                    <tr class="text-center">
+                    <tr>
                         {{range $index:= iterate $dim }}
-                            <td>
-                                <input type="checkbox">
+                            <td class="text-center">
+                                {{/*if the index (plus 1) is greater than zero then return the reservation*/}}
+                                {{if gt (index $reservations (printf "%s-%s-%d" $curYear $curMonth (add $index 1))) 0}}
+                                    <a href="/admin/reservations/cal/{{index $reservations (printf "%s-%s-%d" $curYear $curMonth (add $index 1))}}">
+                                        <span class="text-danger">R</span>
+                                    </a>
+                                {{else}}
+                                <input
+                                        {{if gt (index $blocks (printf "%s-%s-%d" $curYear $curMonth (add $index 1))) 0 }}
+                                            checked
+                                            name="remove_block_{{$roomID}}_{{printf "%s-%s-%d" $curYear $curMonth (add $index 1) }}"
+                                            value="{{index $blocks (printf "%s-%s-%d" $curYear $curMonth (add $index 1))}}"
+                                        {{else}}
+                                            name="add_block_{{$roomID}}_{{printf "%s-%s-%d" $curYear $curMonth (add $index 1) }}"
+                                        {{end}}
+                                        type="checkbox">
+                                {{end}}
                             </td>
                         {{end}}
                     </tr>
