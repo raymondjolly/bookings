@@ -659,6 +659,74 @@ func (rep *Repository) AdminCalendarReservations(w http.ResponseWriter, r *http.
 	})
 }
 
+// AdminCalendarPostReservations handles post of reservation calendar
+func (rep *Repository) AdminCalendarPostReservations(w http.ResponseWriter, r *http.Request) {
+	//log.Println("works")
+	err := r.ParseForm()
+	if err != nil {
+		helpers.ServerError(w, err)
+		return
+	}
+
+	year, err := strconv.Atoi(r.Form.Get("y"))
+	checkParseError(err)
+	month, err := strconv.Atoi(r.Form.Get("m"))
+	checkParseError(err)
+
+	//process blocks
+	rooms, err := rep.DB.AllRooms()
+	if err != nil {
+		helpers.ServerError(w, err)
+		return
+	}
+
+	form := forms.New(r.Form)
+
+	for _, x := range rooms {
+		//Get the block map from session. Loop through the entire map, if we have an entry in the entire map
+		//that does not exist in our posted data, and if the restriction id> 0, then it is a block we need to remove.
+		currMap := rep.App.Session.Get(r.Context(), fmt.Sprintf("block_map_%d", x.ID)).(map[string]int)
+		for name, value := range currMap {
+			// ok will be false if the value is not in the map
+			if val, ok := currMap[name]; ok {
+				// only pay attention to values > 0, and that are not in the form post
+				// the rest are just placeholders for days without blocks
+				if val > 0 {
+					if !form.Has(fmt.Sprintf("remove_block_%d_%s", x.ID, name)) {
+						// delete the restriction by id
+						err := rep.DB.DeleteBlockById(value)
+						if err != nil {
+							log.Println(err)
+						}
+					}
+				}
+			}
+		}
+	}
+
+	//now handle new blocks
+	for name, _ := range r.PostForm {
+		if strings.HasPrefix(name, "add_block") {
+			exploded := strings.Split(name, "_")
+			roomID, _ := strconv.Atoi(exploded[2])
+			date, err := time.Parse("2006-01-02", exploded[3])
+			if err != nil {
+				log.Println(err)
+			}
+			//insert a new block
+			err = rep.DB.InsertBlockForRoom(roomID, date)
+			if err != nil {
+				log.Println(err)
+			}
+		}
+	}
+
+	// now handle new blocks
+
+	rep.App.Session.Put(r.Context(), "flash", "Changes Saved")
+	http.Redirect(w, r, fmt.Sprintf("/admin/reservations-calendar?y=%d&m=%d", year, month), http.StatusSeeOther)
+}
+
 func checkServerError(w http.ResponseWriter, err error) {
 	if err != nil {
 		helpers.ServerError(w, err)
