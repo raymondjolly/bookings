@@ -215,14 +215,14 @@ func (rep *Repository) MakeReservation(w http.ResponseWriter, r *http.Request) {
 	res, ok := rep.App.Session.Get(r.Context(), "reservation").(models.Reservation)
 	if !ok {
 		rep.App.Session.Put(r.Context(), "error", "can't get reservation from session")
-		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
 
 	room, err := rep.DB.GetRoomById(res.RoomID)
 	if err != nil {
 		rep.App.Session.Put(r.Context(), "error", "can't find room")
-		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
 	res.Room.RoomName = room.RoomName
@@ -347,7 +347,7 @@ func (rep *Repository) ReservationSummary(w http.ResponseWriter, r *http.Request
 	reservation, ok := rep.App.Session.Get(r.Context(), "reservation").(models.Reservation)
 	if !ok {
 		rep.App.Session.Put(r.Context(), "error", "Cannot get reservation from session")
-		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
 	rep.App.Session.Remove(r.Context(), "reservation")

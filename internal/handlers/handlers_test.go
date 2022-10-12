@@ -30,6 +30,13 @@ var theTests = []struct {
 	{"colonels-suite", "/colonels-suite", "GET", http.StatusOK},
 	{"generals-quarters", "/generals-quarters", "GET", http.StatusOK},
 	{"search", "/search-availability", "GET", http.StatusOK},
+	{"non-existent", "/green/eggs/and/ham", "GET", http.StatusNotFound},
+	{"login", "/user/login", "GET", http.StatusOK},
+	{"logout", "/user/logout", "GET", http.StatusOK},
+	{"dashboard", "/admin/dashboard", "GET", http.StatusOK},
+	{"new reservations", "/admin/reservations-new", "GET", http.StatusOK},
+	{"show reservations", "/admin/reservations-all", "GET", http.StatusOK},
+	{"show reservation", "/admin/reservations/new/1/show", "GET", http.StatusOK},
 }
 
 func TestNewHandlers(t *testing.T) {
@@ -80,7 +87,7 @@ func Test_MakeReservation(t *testing.T) {
 	rr = httptest.NewRecorder()
 
 	handler.ServeHTTP(rr, req)
-	if rr.Code != http.StatusTemporaryRedirect {
+	if rr.Code != http.StatusSeeOther {
 		t.Errorf("Reservation hander reterend incorrect response code: got %d, wanted %d", rr.Code, http.StatusSeeOther)
 	}
 
@@ -93,7 +100,7 @@ func Test_MakeReservation(t *testing.T) {
 	session.Put(ctx, "reservation", reservation)
 
 	handler.ServeHTTP(rr, req)
-	if rr.Code != http.StatusTemporaryRedirect {
+	if rr.Code != http.StatusSeeOther {
 		t.Errorf("Reservation hander returned incorrect response code: got %d, wanted %d", rr.Code, http.StatusSeeOther)
 	}
 
@@ -129,8 +136,8 @@ func TestRepository_PostReservation(t *testing.T) {
 	handler = http.HandlerFunc(Repo.PostReservation)
 	handler.ServeHTTP(rr, req)
 
-	if rr.Code != http.StatusTemporaryRedirect {
-		t.Errorf("Reservation hander returned for missing response body: got %d, wanted %d", rr.Code, http.StatusTemporaryRedirect)
+	if rr.Code != http.StatusSeeOther {
+		t.Errorf("Reservation hander returned for missing response body: got %d, wanted %d", rr.Code, http.StatusSeeOther)
 	}
 
 	//Test for invalid start date
@@ -150,8 +157,8 @@ func TestRepository_PostReservation(t *testing.T) {
 	handler = http.HandlerFunc(Repo.PostReservation)
 	handler.ServeHTTP(rr, req)
 
-	if rr.Code != http.StatusTemporaryRedirect {
-		t.Errorf("Reservation hander returned for invalid start date: got %d, wanted %d", rr.Code, http.StatusTemporaryRedirect)
+	if rr.Code != http.StatusSeeOther {
+		t.Errorf("Reservation hander returned for invalid start date: got %d, wanted %d", rr.Code, http.StatusSeeOther)
 	}
 
 	//test for invalid end date
@@ -171,8 +178,8 @@ func TestRepository_PostReservation(t *testing.T) {
 	handler = http.HandlerFunc(Repo.PostReservation)
 	handler.ServeHTTP(rr, req)
 
-	if rr.Code != http.StatusTemporaryRedirect {
-		t.Errorf("Reservation hander returned for invalid end date: got %d, wanted %d", rr.Code, http.StatusTemporaryRedirect)
+	if rr.Code != http.StatusSeeOther {
+		t.Errorf("Reservation hander returned for invalid end date: got %d, wanted %d", rr.Code, http.StatusSeeOther)
 	}
 
 	//test for an invalid RoomID
@@ -192,8 +199,8 @@ func TestRepository_PostReservation(t *testing.T) {
 	handler = http.HandlerFunc(Repo.PostReservation)
 	handler.ServeHTTP(rr, req)
 
-	if rr.Code != http.StatusTemporaryRedirect {
-		t.Errorf("Reservation hander returned for invalid Room ID: got %d, wanted %d", rr.Code, http.StatusTemporaryRedirect)
+	if rr.Code != http.StatusSeeOther {
+		t.Errorf("Reservation hander returned for invalid Room ID: got %d, wanted %d", rr.Code, http.StatusSeeOther)
 	}
 
 	//Test for invalid data
@@ -213,8 +220,8 @@ func TestRepository_PostReservation(t *testing.T) {
 	handler = http.HandlerFunc(Repo.PostReservation)
 	handler.ServeHTTP(rr, req)
 
-	if rr.Code != http.StatusTemporaryRedirect {
-		t.Errorf("Reservation hander returned for invalid data: got %d, wanted %d", rr.Code, http.StatusTemporaryRedirect)
+	if rr.Code != http.StatusSeeOther {
+		t.Errorf("Reservation hander returned for invalid data: got %d, wanted %d", rr.Code, http.StatusSeeOther)
 	}
 
 	// test for failure to insert reservation into database
@@ -234,8 +241,8 @@ func TestRepository_PostReservation(t *testing.T) {
 	handler = http.HandlerFunc(Repo.PostReservation)
 	handler.ServeHTTP(rr, req)
 
-	if rr.Code != http.StatusTemporaryRedirect {
-		t.Errorf("Reservation hander failed when trying to fail inserting reservation: got %d, wanted %d", rr.Code, http.StatusTemporaryRedirect)
+	if rr.Code != http.StatusSeeOther {
+		t.Errorf("Reservation hander failed when trying to fail inserting reservation: got %d, wanted %d", rr.Code, http.StatusSeeOther)
 	}
 
 	//test for failure to insert restriction
@@ -255,8 +262,8 @@ func TestRepository_PostReservation(t *testing.T) {
 	handler = http.HandlerFunc(Repo.PostReservation)
 	handler.ServeHTTP(rr, req)
 
-	if rr.Code != http.StatusTemporaryRedirect {
-		t.Errorf("Reservation hander failed when trying to fail inserting reservation: got %d, wanted %d", rr.Code, http.StatusTemporaryRedirect)
+	if rr.Code != http.StatusSeeOther {
+		t.Errorf("Reservation hander failed when trying to fail inserting reservation: got %d, wanted %d", rr.Code, http.StatusSeeOther)
 	}
 
 }
@@ -311,6 +318,74 @@ func getCtx(r *http.Request) context.Context {
 		log.Println(err)
 	}
 	return ctx
+}
+
+var loginTests = []struct {
+	name               string
+	email              string
+	expectedStatusCode int
+	expectedHTML       string
+	expectedLocation   string
+}{
+	{"valid-credentials",
+		"me@here.com",
+		http.StatusSeeOther,
+		"",
+		"/",
+	},
+	{"invalid-credentials",
+		"jack@nothere.com",
+		http.StatusSeeOther,
+		"",
+		"/user/login",
+	}, {
+		"invalid-data",
+		"j",
+		http.StatusOK,
+		`action="/user/login"`,
+		"",
+	},
+}
+
+func TestLogin(t *testing.T) {
+	//range through all tests
+	for _, e := range loginTests {
+		postData := url.Values{}
+		postData.Add("email", e.email)
+		postData.Add("password", "password")
+
+		req, _ := http.NewRequest("POST", "/user/login", strings.NewReader(postData.Encode()))
+		ctx := getCtx(req)
+		req = req.WithContext(ctx)
+
+		//set the header
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		rr := httptest.NewRecorder()
+
+		//call the handler
+		handler := http.HandlerFunc(Repo.PostShowLogin)
+		handler.ServeHTTP(rr, req)
+
+		if rr.Code != e.expectedStatusCode {
+			t.Errorf("failed %s: expected code %d, but got %d", e.name, e.expectedStatusCode, rr.Code)
+		}
+
+		if e.expectedLocation != "" {
+			//get the url from test
+			actualLoc, _ := rr.Result().Location()
+			if actualLoc.String() != e.expectedLocation {
+				t.Errorf("failed %s: expected location %s, but got %s", e.name, e.expectedLocation, actualLoc.String())
+			}
+		}
+
+		if e.expectedHTML != "" {
+			//read the response body into a string
+			html := rr.Body.String()
+			if !strings.Contains(html, e.expectedHTML) {
+				t.Errorf("failed %s: expected to find %s but got %s", e.name, e.expectedHTML, html)
+			}
+		}
+	}
 }
 
 // postReservationTests is the test data for the PostReservation handler test
